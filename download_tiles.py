@@ -22,8 +22,8 @@ def download_tiles(zoom, lat_start, lat_stop, lon_start, lon_stop, satellite=Tru
     print("x range", start_x, stop_x)
     print("y range", start_y, stop_y)   
     
-    for i in range(start_x, stop_x, 1000):
-        end = 1000 if (i + 1000) <= stop_x else (stop_x - i)
+    for i in range(start_x, stop_x, 400):
+        end = 400 if (i + 400) <= stop_x else (stop_x - i)
         for x in range(i, i + end):
             ths = []
             t = FastThread(x, start_y, stop_y, zoom, satellite)
@@ -104,11 +104,22 @@ def download_file(url, filename, folder=""):
 
 if __name__ == "__main__":
     
-    zoom = 19
+    # zoom = 11
  
-    lat_start, lon_start = 34.233188,108.91931,
-    lat_stop, lon_stop = 34.241843,108.928293,
+ #108.919174,34.238897
+ #108.925911,34.235972
+
+#浙江
+ #127.01253,28.710287
+ #117.703498,32.815861
+
+#中国
+ #67.004285,54.847671
+ #133.271348,16.419887
+
+    lat_start, lon_start =  16.419887, 67.004285,
+    lat_stop, lon_stop = 54.847671,133.271348,
 
     satellite = False
-	
-    download_tiles(zoom, lat_start, lat_stop, lon_start, lon_stop, satellite)
+    for zoom in range(9, 14):
+        download_tiles(zoom, lat_start, lat_stop, lon_start, lon_stop, satellite)
