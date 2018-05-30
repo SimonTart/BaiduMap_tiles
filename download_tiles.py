@@ -1,10 +1,10 @@
 #!/usr/bin/python
 
-import urllib.request, urllib.error, urllib.parse
 from threading import Thread
 import os, sys
 import math
 from gmap_utils import *
+from proxy import request
 
 import time
 import random
@@ -20,11 +20,17 @@ def download_tiles(zoom, lat_start, lat_stop, lon_start, lon_stop, satellite=Tru
     stop_y = int(stop_y//256)
     
     print("x range", start_x, stop_x)
-    print("y range", start_y, stop_y)
+    print("y range", start_y, stop_y)   
     
-    for x in range(start_x, stop_x):
-        # download(x, y, zoom)
-        FastThread(x, start_y, stop_y, zoom, satellite).start()
+    for i in range(start_x, stop_x, 1000):
+        end = 1000 if (i + 1000) <= stop_x else (stop_x - i)
+        for x in range(i, i + end):
+            ths = []
+            t = FastThread(x, start_y, stop_y, zoom, satellite)
+            ths.append(t)
+            t.start()
+        for t in ths:
+            t.join()
 
 
 class FastThread(Thread):
@@ -69,34 +75,31 @@ def download_satellite(x, y, zoom):
     url = "http://shangetu0.map.bdimg.com/it/" + path
     filename = path.replace(";", ",") + ".jpg"
 
-    download_file(url, filename, folder)
+    return download_file(url, filename, folder)
 
 
 def download_file(url, filename, folder=""):
     full_file_path = folder + filename
     if not os.path.exists(full_file_path):
-        bytes = None
         try:
-            req = urllib.request.Request(url, data=None)
-            response = urllib.request.urlopen(req)
-            bytes = response.read()
+            res = request('get', url)
         except Exception as e:
             print("--", filename, "->", e)
-            sys.exit(1)
+            return False
         
-        if bytes.startswith(b"<html>"):
+        if res.content.startswith(b"<html>"):
             print("-- forbidden", filename)
-            sys.exit(1)
+            return download_file(url, filename, folder)
         
         print("-- saving " + filename)
         
         f = open(full_file_path, 'wb')
-        f.write(bytes)
+        f.write(res.content)
         f.close()
-        
-        time.sleep(1 + random.random())
+        return True
     else:
         print("-- existed " + filename)
+        return True
             
 
 if __name__ == "__main__":
@@ -106,6 +109,6 @@ if __name__ == "__main__":
     lat_start, lon_start = 34.233188,108.91931,
     lat_stop, lon_stop = 34.241843,108.928293,
 
-    satellite = True
+    satellite = False
 	
     download_tiles(zoom, lat_start, lat_stop, lon_start, lon_stop, satellite)
